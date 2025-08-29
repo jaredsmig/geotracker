@@ -76,7 +76,7 @@ function App() {
         const trackLayer = new GeoJSONLayer({
           url: "http://localhost:5000/tracks.geojson",
           title: "Asset 123 Track",
-          definitionExpression: "properties.kind = 'track'",
+          definitionExpression: "kind = 'track'",
           renderer: new SimpleRenderer({
             symbol: new SimpleLineSymbol({ color: [0, 122, 255, 1], width: 3 }),
           }),
@@ -85,7 +85,7 @@ function App() {
         const currentLayer = new GeoJSONLayer({
           url: "http://localhost:5000/tracks.geojson",
           title: "Current Position",
-          definitionExpression: "properties.kind = 'current'",
+          definitionExpression: "kind = 'current'",
           renderer: new SimpleRenderer({
             symbol: new SimpleMarkerSymbol({
               color: [255, 64, 64, 1],
