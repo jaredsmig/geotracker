@@ -62,7 +62,7 @@ function App() {
         GeoJSONLayer: any,
         SimpleRenderer: any,
         SimpleLineSymbol: any,
-        SimpleMarkerSymbol: any
+        SimpleMarkerSymbol: any,
       ) => {
         const map = new EsriMap({ basemap: "streets-vector" });
         const view = new MapView({
@@ -103,14 +103,15 @@ function App() {
         Promise.all([trackLayer.when(), currentLayer.when()])
           .then(() => trackLayer.queryExtent())
           .then(
-            (res: any) => res && res.extent && view.goTo(res.extent.expand(1.2))
+            (res: any) =>
+              res && res.extent && view.goTo(res.extent.expand(1.2)),
           )
           .finally(() => setMapReady(true));
 
         return () => {
           view?.destroy?.();
         };
-      }
+      },
     );
   }, []);
 
