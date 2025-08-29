@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useRef, useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
 
 type Weather = {
   date: string;
@@ -15,23 +16,114 @@ function App() {
   const [weather, setWeather] = useState<Weather[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const mapDivRef = useRef<HTMLDivElement | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const trackLayerRef = useRef<any>(null);
+  const currentLayerRef = useRef<any>(null);
 
   const fetchWeather = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:5000/weatherforecast');
-      if (!response.ok) throw new Error('Failed to fetch');
+      // Docker-compose default ports (api:5000, web:3000)
+      const response = await fetch("http://localhost:5000/weatherforecast");
+      if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setWeather(data);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unknown error occurred');
+        setError("An unknown error occurred");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Minimal ArcGIS map setup using CDN AMD loader (window.require)
+  useEffect(() => {
+    // Types for window.require are not present; declare at runtime
+    const w = window as any;
+    if (!mapDivRef.current || !w.require) return;
+
+    w.require(
+      [
+        "esri/Map",
+        "esri/views/MapView",
+        "esri/layers/GeoJSONLayer",
+        "esri/renderers/SimpleRenderer",
+        "esri/symbols/SimpleLineSymbol",
+        "esri/symbols/SimpleMarkerSymbol",
+      ],
+      (
+        EsriMap: any,
+        MapView: any,
+        GeoJSONLayer: any,
+        SimpleRenderer: any,
+        SimpleLineSymbol: any,
+        SimpleMarkerSymbol: any
+      ) => {
+        const map = new EsriMap({ basemap: "streets-vector" });
+        const view = new MapView({
+          container: mapDivRef.current,
+          map,
+          center: [-122.4194, 37.7749],
+          zoom: 13,
+        });
+
+        // Symbology for track (line) and current position (point) via two layers with a definitionExpression
+        const trackLayer = new GeoJSONLayer({
+          url: "http://localhost:5000/tracks.geojson",
+          title: "Asset 123 Track",
+          definitionExpression: "properties.kind = 'track'",
+          renderer: new SimpleRenderer({
+            symbol: new SimpleLineSymbol({ color: [0, 122, 255, 1], width: 3 }),
+          }),
+        });
+
+        const currentLayer = new GeoJSONLayer({
+          url: "http://localhost:5000/tracks.geojson",
+          title: "Current Position",
+          definitionExpression: "properties.kind = 'current'",
+          renderer: new SimpleRenderer({
+            symbol: new SimpleMarkerSymbol({
+              color: [255, 64, 64, 1],
+              size: 10,
+              outline: { color: [255, 255, 255, 1], width: 1 },
+            }),
+          }),
+        });
+
+        map.addMany([trackLayer, currentLayer]);
+        trackLayerRef.current = trackLayer;
+        currentLayerRef.current = currentLayer;
+
+        // When layers load, zoom to data
+        Promise.all([trackLayer.when(), currentLayer.when()])
+          .then(() => trackLayer.queryExtent())
+          .then(
+            (res: any) => res && res.extent && view.goTo(res.extent.expand(1.2))
+          )
+          .finally(() => setMapReady(true));
+
+        return () => {
+          view?.destroy?.();
+        };
+      }
+    );
+  }, []);
+
+  const refreshTrack = () => {
+    const base = "http://localhost:5000/tracks.geojson";
+    const cacheBust = `${base}?t=${Date.now()}`;
+    if (trackLayerRef.current) {
+      trackLayerRef.current.url = cacheBust;
+      trackLayerRef.current.refresh?.();
+    }
+    if (currentLayerRef.current) {
+      currentLayerRef.current.url = cacheBust;
+      currentLayerRef.current.refresh?.();
     }
   };
 
@@ -50,12 +142,23 @@ function App() {
         <button onClick={() => setCount((count) => count + 1)}>
           count is {count}
         </button>
-        <button onClick={fetchWeather} disabled={loading} style={{ marginLeft: '1em' }}>
-          {loading ? 'Loading...' : 'Fetch Weather'}
+        <button
+          onClick={fetchWeather}
+          disabled={loading}
+          style={{ marginLeft: "1em" }}
+        >
+          {loading ? "Loading..." : "Fetch Weather"}
         </button>
-        {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+        <button
+          onClick={refreshTrack}
+          disabled={!mapReady}
+          style={{ marginLeft: "1em" }}
+        >
+          {mapReady ? "Refresh Track" : "Loading Map..."}
+        </button>
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
         {weather.length > 0 && (
-          <table style={{ marginTop: '1em', width: '100%' }}>
+          <table style={{ marginTop: "1em", width: "100%" }}>
             <thead>
               <tr>
                 <th>Date</th>
@@ -79,12 +182,13 @@ function App() {
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
         </p>
+        <div id="mapDiv" ref={mapDivRef} />
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
