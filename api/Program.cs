@@ -49,16 +49,22 @@ app.MapGet("/weatherforecast", () =>
 // Simple GeoJSON track endpoint for ArcGIS overlay
 app.MapGet("/tracks.geojson", () =>
 {
-    // Demo track: a short line with a current position point (last vertex)
-    var coordinates = new double[][]
+    // Demo track: randomize each coordinate slightly within SF viewport
+    double minLon = -122.425, maxLon = -122.395;
+    double minLat = 37.770, maxLat = 37.790;
+    var baseCoordinates = new double[][]
     {
-        new [] { -122.4194, 37.7749 },  // San Francisco
+        new [] { -122.4194, 37.7749 },
         new [] { -122.414,  37.7785 },
         new [] { -122.409,  37.7810 },
         new [] { -122.404,  37.7835 },
-        new [] { -122.399,  37.7860 }   // current position
+        new [] { -122.399,  37.7860 }
     };
-
+    var rand = new Random();
+    var coordinates = baseCoordinates.Select(coord => new double[] {
+        Math.Min(maxLon, Math.Max(minLon, coord[0] + (rand.NextDouble() - 0.5) * 0.004)),
+        Math.Min(maxLat, Math.Max(minLat, coord[1] + (rand.NextDouble() - 0.5) * 0.004))
+    }).ToArray();
     var current = coordinates[^1];
 
     var featureCollection = new
