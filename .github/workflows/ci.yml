@@ -50,24 +50,12 @@ jobs:
       - uses: actions/checkout@v4
 
       # Package frontend
-      - name: Install frontend dependencies
-        run: cd web && npm ci
-      - name: Build frontend
-        run: cd web && npm run build
       - name: Generate frontend deployment package
-        run: cd web && zip -r ../geotracker-web.zip . -x '*.git*'
-
-      # Set up .NET
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "9.0.x"
+        run: cd web && zip -r deploy.zip . -x '*.git*'
 
       # Package backend
-      - name: Publish backend
-        run: cd api && dotnet publish -c Release -o publish
       - name: Generate backend deployment package
-        run: cd api && zip -r ../geotracker-api.zip . -x '*.git*'
+        run: cd api && zip -r deploy.zip . -x '*.git*'
 
       # Deploy frontend
       - name: Deploy to Elastic Beanstalk (Web)
@@ -79,7 +67,7 @@ jobs:
           environment_name: geotracker-web-env
           version_label: ${{ github.sha }}-web
           region: us-east-1
-          deployment_package: geotracker-web.zip
+          deployment_package: web/deploy.zip
 
       # Deploy backend
       - name: Deploy to Elastic Beanstalk (API)
@@ -91,4 +79,4 @@ jobs:
           environment_name: geotracker-api-env
           version_label: ${{ github.sha }}-api
           region: us-east-1
-          deployment_package: geotracker-api.zip
+          deployment_package: api/deploy.zip
