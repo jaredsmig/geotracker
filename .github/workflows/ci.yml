@@ -55,7 +55,7 @@ jobs:
       - name: Build frontend
         run: cd web && npm run build
       - name: Zip frontend
-        run: cd web/dist && zip -r ../../geotracker-web.zip .
+        run: cd web && zip -r ../geotracker-web.zip Dockerfile dist
 
       # Set up .NET
       - name: Set up .NET
@@ -67,7 +67,7 @@ jobs:
       - name: Publish backend
         run: cd api && dotnet publish -c Release -o publish
       - name: Zip backend
-        run: cd api/publish && zip -r ../../geotracker-api.zip .
+        run: cd api/publish && zip -r ../../geotracker-api.zip ../Dockerfile .
 
       # Deploy frontend
       - name: Deploy to Elastic Beanstalk (Web)
