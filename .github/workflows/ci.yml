@@ -78,7 +78,7 @@ jobs:
           application_name: geotracker-web
           environment_name: geotracker-web-env
           version_label: ${{ github.sha }}-web
-          region: your-aws-region
+          region: us-east-1
           deployment_package: geotracker-web.zip
 
       # Deploy backend
@@ -90,5 +90,5 @@ jobs:
           application_name: geotracker-api
           environment_name: geotracker-api-env
           version_label: ${{ github.sha }}-api
-          region: your-aws-region
+          region: us-east-1
           deployment_package: geotracker-api.zip
