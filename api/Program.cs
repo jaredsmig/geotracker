@@ -10,9 +10,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
-        policy => policy.WithOrigins("http://localhost:3000")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod());
+        policy => policy.WithOrigins(
+            "http://localhost:3000",
+            "http://geotracker-web-env.eba-5fymqjq9.us-east-1.elasticbeanstalk.com",
+            "https://geotracker-web-env.eba-5fymqjq9.us-east-1.elasticbeanstalk.com"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod());
 });
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "80";
