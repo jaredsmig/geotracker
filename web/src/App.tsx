@@ -21,12 +21,12 @@ function App() {
   const trackLayerRef = useRef<any>(null);
   const currentLayerRef = useRef<any>(null);
 
+  const apiUrl = import.meta.env.VITE_API_URL;
   const fetchWeather = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Docker-compose default ports (api:5000, web:3000)
-      const response = await fetch("http://localhost:5000/weatherforecast");
+      const response = await fetch(`${apiUrl}weatherforecast`);
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
       setWeather(data);
@@ -43,7 +43,6 @@ function App() {
 
   // Minimal ArcGIS map setup using CDN AMD loader (window.require)
   useEffect(() => {
-    // Types for window.require are not present; declare at runtime
     const w = window as any;
     if (!mapDivRef.current || !w.require) return;
 
@@ -72,9 +71,9 @@ function App() {
           zoom: 13,
         });
 
-        // Symbology for track (line) and current position (point) via two layers with a definitionExpression
+        const geoJsonUrl = `${apiUrl}tracks.geojson`;
         const trackLayer = new GeoJSONLayer({
-          url: "http://localhost:5000/tracks.geojson",
+          url: geoJsonUrl,
           title: "Asset 123 Track",
           definitionExpression: "kind = 'track'",
           renderer: new SimpleRenderer({
@@ -83,7 +82,7 @@ function App() {
         });
 
         const currentLayer = new GeoJSONLayer({
-          url: "http://localhost:5000/tracks.geojson",
+          url: geoJsonUrl,
           title: "Current Position",
           definitionExpression: "kind = 'current'",
           renderer: new SimpleRenderer({
@@ -99,7 +98,6 @@ function App() {
         trackLayerRef.current = trackLayer;
         currentLayerRef.current = currentLayer;
 
-        // When layers load, zoom to data
         Promise.all([trackLayer.when(), currentLayer.when()])
           .then(() => trackLayer.queryExtent())
           .then(
@@ -113,10 +111,10 @@ function App() {
         };
       },
     );
-  }, []);
+  }, [apiUrl]);
 
   const refreshTrack = () => {
-    const base = "http://localhost:5000/tracks.geojson";
+    const base = `${apiUrl}tracks.geojson`;
     const cacheBust = `${base}?t=${Date.now()}`;
     if (trackLayerRef.current) {
       trackLayerRef.current.url = cacheBust;

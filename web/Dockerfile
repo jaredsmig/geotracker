@@ -2,7 +2,8 @@
 FROM node:20 AS build
 WORKDIR /app
 COPY . .
-RUN npm install && npm run build
+RUN npm install
+RUN chmod +x node_modules/.bin/tsc node_modules/.bin/vite && npm run build
 
 FROM nginx:alpine AS production
 WORKDIR /usr/share/nginx/html
