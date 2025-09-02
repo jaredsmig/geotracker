@@ -21,7 +21,9 @@ function App() {
   const trackLayerRef = useRef<any>(null);
   const currentLayerRef = useRef<any>(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL;
+  const apiUrl =
+    import.meta.env.VITE_API_URL ||
+    "http://geotracker-api-env.eba-qm3rwtee.us-east-1.elasticbeanstalk.com/";
   const fetchWeather = async () => {
     setLoading(true);
     setError(null);
